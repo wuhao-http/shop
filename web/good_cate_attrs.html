@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+<link rel="stylesheet" type="text/css" href="static/h-ui/css/H-ui.min.css" />
+<link rel="stylesheet" type="text/css" href="static/h-ui.admin/css/H-ui.admin.css" />
+<link rel="stylesheet" type="text/css" href="lib/Hui-iconfont/1.0.8/iconfont.css" />
+<link rel="stylesheet" type="text/css" href="static/h-ui.admin/css/style.css" />
+
+<link rel="stylesheet" href="lib/zTree_v3/css/zTreeStyle/zTreeStyle.css" type="text/css">
+<script type="text/javascript" src="js/jquery-3.4.1.min.js"></script>
+<script type="text/javascript" src="lib/zTree_v3/js/jquery.ztree.core.min.js"></script>
+<script type="text/javascript" src="lib/zTree_v3/js/jquery.ztree.excheck.js"></script>
+<script type="text/javascript" src="lib/zTree_v3/js/jquery.ztree.exedit.js"></script>
+<style>
+.input-text{
+width:200px;
+}
+.row{
+margin:10px;
+}
+</style>
+</head>
+
+<body>
+<!-- 模板代码 -->
+<div style="border:1px solid red;width:700px;margin-bottom:10px;margin-left:20px;display:none" tid="-1">
+	<div class="row cl" firstid="groupAttrDiv">
+		<label>分组名称：</label>
+		<div style="display:inline-block;" secondid="groupNameDiv">
+			<input type="text" class="input-text"  />
+			<button type="button" class="attrBtn">添加属性</button>
+			<button type="button" class="removeGroup">移出</button>
+		</div>
+		
+		<div style="margin-top:5px;" aid="0" thirdid="attrNameValDiv">
+			<label>属性名称：</label>
+			<div style="display:inline-block;" forthid="attrNameDiv">
+				<input type="text" class="input-text"  />
+				<select class="sel">
+					<option value=0>下拉单选</option>
+					<option value=1>单选按钮</option>
+					<option value=2>多选按钮</option>
+				</select>
+				<input class="attrType" type="checkbox" value="1" />规格属性
+				<button type="button" class="attrValBtn">添加属性值</button>
+				<button type="button" class="removeAttr">移除</button>
+			</div>
+			<div style="margin-top:5px;" attrVal="0" fifthid="attrValDiv">
+				<label>&nbsp;&nbsp;&nbsp;属性值：</label>
+				<div style="display:inline-block;">
+					<input type="text" class="input-text"  />
+					<button type="button" class="removeAttrVal">移除</button>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<div class="page-container">
+	<form action="" method="post" class="form form-horizontal" id="form-user-add">
+		<div class="row cl">
+			<label>
+				<span class="c-red">*</span>
+				分类名称：
+			</label>
+			<div style="display:inline-block;position:relative;" id="selectId">
+				<input type="text" class="input-text" id="cateName" name="cateName" />
+				<input type="hidden" id="cateId" name="goodCateId">
+				<ul id="treeDemo" class="ztree" style="position:absolute;z-index:18;background:#ffffff;display:none;width:90%;"></ul>
+				<button type="button" class="btn btn-success" id="groupBtn">添加分组</button>
+			</div>
+		</div>
+		<!-- 存放分类属性的容器 -->
+		<div id="groupDiv">
+		
+		</div>
+		<div class="row cl">
+			<div class="col-9 col-offset-2">
+				<input id="subBtn" class="btn btn-primary radius" type="button" value="&nbsp;&nbsp;提交&nbsp;&nbsp;">
+			</div>
+		</div>
+	</form>
+</div>
+
+
+
+</body>
+<script>
+var zTreeObj;
+
+$(function(){
+    	//编写节点点击触发函数
+		function zTreeBeforeClick(treeId, treeNode, clickFlag) {
+			$("#groupDiv").html("");
+    		if(!treeNode.isParent){
+    			$("#treeDemo").hide();
+    		  	$("#cateName").val(treeNode.cateName);	
+    			$("#cateId").val(treeNode.id);
+    		}
+    		if(treeNode.attrTemplate!=undefined){
+    			var attrTemplate = treeNode.attrTemplate;
+				attrTemplate = JSON.parse(attrTemplate);
+				var  templateStr = "";
+				$.each(attrTemplate,function(index0,obj0){
+					
+					templateStr+='<div  style="border:1px solid red;width:700px;margin-bottom:10px;margin-left:20px;" tid="0">';
+					templateStr+='<div class="row cl" firstid="groupAttrDiv">';
+					templateStr+='<label>分组名称：</label>';
+					templateStr+='<div style="display:inline-block;" secondid="groupNameDiv">';
+					templateStr+='<input type="text" class="input-text" value="'+obj0.groupName+'" />&nbsp;';
+					templateStr+='<button type="button" class="attrBtn">添加属性</button>&nbsp;';
+					templateStr+='<button type="button" class="removeGroup">移出</button>&nbsp;';
+					templateStr+='</div>';
+						$.each(obj0.attrNameVals,function(index1,obj1){
+							templateStr+='<div style="margin-top:5px;" aid="0" thirdid="attrNameValDiv">';
+							templateStr+='<label>属性名称：</label>';
+							templateStr+='<div style="display:inline-block;" forthid="attrNameDiv">';
+							templateStr+='<input type="text" class="input-text" value="'+obj1.attrName+'" />&nbsp;';
+							templateStr+='<select class="sel">';
+							if(obj1.attrShowType==0){
+								templateStr+='<option value=0 selected="selected">下拉单选</option>';
+								templateStr+='<option value=1>单选按钮</option>';
+								templateStr+='<option value=2>多选按钮</option>';
+							}else if(obj1.attrShowType==1){
+								templateStr+='<option value=0>下拉单选</option>';
+								templateStr+='<option value=1 selected="selected">单选按钮</option>';
+								templateStr+='<option value=2>多选按钮</option>';
+							}else if(obj1.attrShowType==2){
+								templateStr+='<option value=0>下拉单选</option>';
+								templateStr+='<option value=1>单选按钮</option>';
+								templateStr+='<option value=2 selected="selected">多选按钮</option>';
+							}
+							
+							templateStr+='</select>&nbsp;';
+							if(obj1.attrType==1){
+								templateStr+='<input class="attrType" type="checkbox" value="1" checked="checked"/>&nbsp;规格属性&nbsp;';
+							}else{
+								templateStr+='<input class="attrType" type="checkbox" value="1" />&nbsp;规格属性&nbsp;';
+							}
+							
+							templateStr+='<button type="button" class="attrValBtn">添加属性值</button>&nbsp;';
+							templateStr+='<button type="button" class="removeAttr">移出</button>&nbsp;';
+							templateStr+='</div>';
+								$.each(obj1.attrVals,function(index2,obj2){
+									templateStr+='<div style="margin-top:5px;" attrVal="0" fifthid="attrValDiv">';
+										templateStr+='<label>&nbsp;&nbsp;&nbsp;属性值：</label>';
+										templateStr+='<div style="display:inline-block;">';
+											templateStr+='<input type="text" class="input-text"  value="'+obj2+'"/>&nbsp;';
+											templateStr+='<button type="button" class="removeAttrVal">移出</button>&nbsp;';
+										templateStr+='</div>';
+									templateStr+='</div> ';
+								});
+							templateStr+='</div> ';
+						});
+						
+					templateStr+='</div>';
+					templateStr+='</div>';
+					
+					
+				})	
+				
+				$("#groupDiv").html(templateStr);
+    		}
+		    return false;
+		};
+	
+	
+     	var setting = {
+     			callback:{
+     				beforeClick:zTreeBeforeClick
+     			},
+				data: {
+					key: {
+						name: "cateName",
+						children:"childCates",
+						url:"url1"
+					}
+				}
+		};
+	  
+	   /* 给添加分组按钮绑定事件 */
+	   $("#cateName").click(function(){
+		   // zTree 的数据属性，深入使用请参考 API 文档（zTreeNode 节点数据详解）
+		   $.ajax({
+					type: 'POST',
+					url: 'good_cates',
+					dataType: 'json',
+					success: function(data){
+						
+						  zTreeObj = $.fn.zTree.init($("#treeDemo"), setting, data);
+						  $("#treeDemo").show();
+					},
+					error:function(data) {
+						console.log(data.msg);
+					},
+		   });
+	   });
+	   /* ztree消失事件 */
+	   $("#selectId").mouseleave(function() {
+		   $("#treeDemo").hide();
+	   });
+	   /*  给添加分组按钮添加事件 */
+	   $("#groupBtn").click(function(){
+			var tempNode = $("body").find("div[tid='-1']").clone();
+			tempNode.show();
+			tempNode.attr("tid","0");
+			$("#groupDiv").append(tempNode);	
+	  });
+	   /*给增加属性添加事件*/ 
+	   $("#groupDiv").on("click",".attrBtn",function(){
+			var tempNode =$("body").find("div[tid='-1'] div[thirdid='attrNameValDiv']").clone();
+			$(this).parent().parent().append(tempNode); 
+		
+	   }); 
+	   /*给添加属性值添加事件*/
+	   
+	   $("#groupDiv").on("click",".attrValBtn",function(){
+		   var tempNode = $("body").find("div[tid='-1'] div[fifthid='attrValDiv']").clone();
+		   $(this).parent().parent().append(tempNode); 
+	   });
+	   
+	   $("#subBtn").click(function(){
+		   if($("#cateId").val()==""){
+				alert("请选择商品属性分类!");
+				return;
+		   }
+		   var groupAttrVals =[];
+		   $("#groupDiv div[tid='0']").each(function(index,e){
+			   var groupAttrDiv= $(this).find("div[firstid='groupAttrDiv']");
+			   var groupNameDiv =groupAttrDiv.find("div[secondid='groupNameDiv']");
+			   //获取到了分组名称
+			   var groupName = groupNameDiv.find("input").val();
+			   //属性名称属性值Div会有多份
+			   var attrNameValDivs = groupAttrDiv.find("div[thirdid='attrNameValDiv']");
+			   var attrNameVals =[];
+			   attrNameValDivs.each(function(index,e){
+				   //获取属性名称
+				   var attrName = $(this).find("div[forthid='attrNameDiv']").find("input").val();
+				   //获取属性的展示方式
+				   var attrShowType= $(this).find("div[forthid='attrNameDiv']").find("select").val();
+				   //获取属性的类型
+				   var attrType = $(this).find("div[forthid='attrNameDiv']").find("input[type='checkbox']").prop('checked');
+				   if(attrType){
+					   attrType=1;
+				   }else{
+					   attrType=0;
+				   }
+				   var attrValDivs = $(this).find("div[fifthid='attrValDiv']");
+				   var attrVals = [];
+				   attrValDivs.each(function(index,e){
+					   var attrVal  = $(this).find("div").find("input").val();
+					  
+						attrVals.push(attrVal);
+				   });
+				   attrNameVals.push({
+						"attrName":attrName,
+						"attrVals":attrVals,
+						"attrShowType":attrShowType,
+						"attrType":attrType
+					});
+				   
+			   });
+			   groupAttrVals.push({
+				   "groupName":groupName,
+				   "attrNameVals":attrNameVals
+			   });
+		   });
+		   
+		   
+		  //把JavsScript数组对象转换成json格式的字符串
+			var groupAttrValsStr =JSON.stringify(groupAttrVals);
+		 	
+			 $.ajax({
+				url:"cate_template",
+				type:"post",
+				dataType:"json",
+				data:{"cid":$("#cateId").val(),"groupAttrVals":groupAttrValsStr},
+				success:function(result){
+					alert(result.msg);
+				}
+			}); 
+	   });
+	   //移除的功能
+	   $("#groupDiv").on("click",".removeAttrVal",function(){
+			$(this).parent().parent().parent().remove();	
+		});
+		$("#groupDiv").on("click",".removeAttr",function(){
+			$(this).parent().parent().remove();
+		});
+		$("#groupDiv").on("click",".removeGroup",function(){
+			$(this).parent().parent().remove();
+		});
+});
+</script>
+</html>

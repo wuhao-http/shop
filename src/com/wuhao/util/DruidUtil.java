@@ -14,24 +14,27 @@ import org.junit.Test;
 
 import com.alibaba.druid.pool.DruidDataSourceFactory;
 
+/**
+ * 数据库连接工具
+ */
 public class DruidUtil {
 	private static DataSource ds  = null;
-	private Connection connection;
+	//加载配置文件
 	static {
-		Properties properties = new Properties();
-//		FileInputStream is  = new FileInputStream("src/druid.properties");
-		InputStream is = DruidUtil.class.getClassLoader().getResourceAsStream("druid.properties");
 		try {
+			Properties properties = new Properties();
+			InputStream is = DruidUtil.class.getClassLoader().getResourceAsStream("druid.properties");
 			properties.load(is);
 			ds = DruidDataSourceFactory.createDataSource(properties);
 		} catch (IOException e) {
+			e.printStackTrace();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 
 	}
 	/**
-	 * 从连接池中获取连接
+	 * 获取连接
 	 * @return
 	 * @throws SQLException
 	 */
@@ -39,36 +42,41 @@ public class DruidUtil {
 		return ds.getConnection();
 	}
 	/**
-	 * 释放连接的使用权，把连接交回池中
+	 * 关闭连接，释放资源
 	 * @param rs
 	 * @param stmt
 	 * @param conn
 	 */
-	public static void disResource(ResultSet rs ,Statement stmt,Connection conn) {
-		try {
-			if(rs!=null) {
-				rs.close();
+	 public static void release(ResultSet rs ,Statement stmt,Connection conn) {
+			try {
+				if(rs!=null) {
+					rs.close();
+				}
+				if(stmt!=null) {
+					stmt.close();
+				}
+				if(conn!=null) {
+					conn.close();
+				}
+				
+			}catch(Exception e) {
+				e.printStackTrace();
 			}
-			if(stmt!=null) {
-				stmt.close();
-			}
-			if(conn!=null) {
-				conn.close();
-			}
-
-		}catch(Exception e) {
-			e.printStackTrace();
-		}
 	}
 	/**
-	 * 返回数据源
+	 * 获取数据源
 	 * @return
 	 */
 	public static DataSource getDataSource() {
 		return ds;
 	}
+
+	/**
+	 * 测试连接
+	 * @throws SQLException
+	 */
 	@Test
 	public void test() throws SQLException {
-		System.out.println(getConnection());
+		System.out.println(ds);
 	}
 }

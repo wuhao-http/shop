@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>商品分类管理</title>
+
+<!-- 引入ztree的样式 -->
+<link rel="stylesheet" href="lib/zTree_v3/css/zTreeStyle/zTreeStyle.css" type="text/css">
+<script type="text/javascript" src="js/jquery-3.4.1.min.js"></script>
+<script type="text/javascript" src="lib/layer/2.4/layer.js"></script>
+<script type="text/javascript" src="lib/zTree_v3/js/jquery.ztree.core.min.js"></script>
+<script type="text/javascript" src="lib/zTree_v3/js/jquery.ztree.excheck.js"></script>
+<script type="text/javascript" src="lib/zTree_v3/js/jquery.ztree.exedit.js"></script>
+</head>
+<body>
+<div>
+   <ul id="treeDemo" class="ztree"></ul>
+</div>
+</body>
+<script type="text/javascript">
+var zTreeObj;
+
+$(function(){
+	 // zTree 的参数配置，深入使用请参考 API 文档（setting 配置详解）
+		/**
+			判断如果是父节点不显示删除按钮
+		*/
+		function beforeShowRemoveBtn(treeId, treeNode){
+			return !treeNode.isParent;
+		}
+		 /**
+  	   	删除分类方法
+  	   */
+  	   function removeCate(treeId,treeNode){
+			
+  		   var flag;
+  		 	var index00= layer.confirm('您确定要删除该分类吗？', {
+  			  btn: ['确定','取消'] //按钮
+  			}, function(){
+  				alert(123);
+  				$.ajax({
+  					url:"delete_cate",
+					dataType:"json",
+					data:{id:treeNode.id},
+					type:"POST",
+					success:function(result){
+						if(result.flag){
+							layer.close(index00);
+							zTreeObj.removeNode(treeNode);
+						}
+					}
+  				});
+  				
+  			}, function(){
+  				layer.close(index00);
+  			});
+  		 	return false;
+  	   }
+	 
+		 
+  	 /**
+ 	   	修改分类方法
+ 	   */
+ 	   function updateCate(treeId,treeNode){
+ 		 var index000=	layer.open({
+	   	 		type: 1,
+	   	 		area: [500+'px', 300 +'px'],
+	   	 		fix: false, //不固定
+	   	 		maxmin: true,
+	   	 		shade:0.4,
+	   	 		title: "添加商品分类",
+	   	 		content: "<div style='margin:0 auto;width:300px;'><form id='form1'><table>"+
+				"<tr><td>商品分类名称</td><td><input type='hidden' name='id' value='"+treeNode.id+"'/><input type='text' name='cateName' value='"+treeNode.cateName+"'/></td></tr>"+
+				"<tr><td>商品分类url</td><td><input type='text' name='cateUrl' value='"+treeNode.url+"'/></td></tr>"+
+				"<tr><td>商品分类排序</td><td><input type='text' name='cateOrder' value='"+treeNode.cateOrder+"'/></td></tr>"+
+				"<tr><td colspan=2 style='text-align:center'><input id='updateCate' type='button' value='修改'/></td></tr>"+
+				"</table></form></div>"
+	   	 	});
+			$("#updateCate").click(function(){
+				$.ajax({
+					url:"update_cate",
+					dataType:"json",
+					data:$("#form1").serialize(),
+					type:"POST",
+					success:function(result){
+						if(result.flag){
+							treeNode.cateName= result.cateName;
+							zTreeObj.updateNode(treeNode);
+						  	layer.close(index000);
+							
+						}
+					}
+				});
+			
+			});
+ 		   return false;
+ 	   };	 
+	 
+ 	   
+ 	   
+ 		/**
+	   	自定义的添加按钮
+	   	*/
+  		function addHoverDom(treeId, treeNode) {
+ 			<!--显示添加按钮代码开始-->
+  			var aObj = $("#" + treeNode.tId + "_a");
+  			if ($("#diyBtn_space_"+treeNode.id).length>0) return;
+  			var editStr = "<span title='"+treeNode.cateName+"'  id='diyBtn_space_" +treeNode.id+ "' class='button add'> </span>";
+  			aObj.append(editStr);
+  			<!--显示添加按钮代码结束-->
+  			var btn = $("#diyBtn_space_"+treeNode.id);
+  			btn.bind("click", function(){
+  			var index0=	layer.open({
+  		   	 		type: 1,
+  		   	 		area: [500+'px', 300 +'px'],
+  		   	 		fix: false, //不固定
+  		   	 		maxmin: true,
+  		   	 		shade:0.4,
+  		   	 		title: "添加商品分类",
+  		   	 		content: "<div style='margin:0 auto;width:300px;'><form id='form1'><table>"+
+  					"<tr><td>商品分类名称</td><td><input type='hidden' name='pid' value='"+treeNode.id+"'/><input type='hidden' name='cateLevel' value='"+treeNode.cateLevel+"'/><input type='text' name='cateName'/></td></tr>"+
+  					"<tr><td>商品分类url</td><td><input type='text' name='cateUrl'/></td></tr>"+
+  					"<tr><td>商品分类排序</td><td><input type='text' name='cateOrder'/></td></tr>"+
+  					"<tr><td colspan=2 style='text-align:center'><input id='addCate' type='button' value='添加'/></td></tr>"+
+  					"</table></form></div>"
+  		   	 	});
+  				var addCate = $("#addCate").click(function(){
+  					$.ajax({
+  						url:"add_cate",
+  						dataType:"json",
+  						data:$("#form1").serialize(),
+  						type:"POST",
+  						success:function(result){
+  							if(result.flag){
+  							  	layer.close(index0);
+	   							var newNode =result.cate;
+	   							zTreeObj.addNodes(treeNode,newNode);
+  							}
+  						}
+  					});
+  				
+  				});
+  			});
+  		};
+  		/**
+  		自定义移除按钮
+  		*/
+ 	   function removeHoverDom(treeId, treeNode) {
+ 			$("#diyBtn_"+treeNode.id).unbind().remove();
+ 			$("#diyBtn_space_" +treeNode.id).unbind().remove(); 
+ 	   };
+ 	   
+ 	   
+ 	   
+	   var setting = {
+				data: {
+					key: {
+						name: "cateName",
+						children:"childCates"
+					}
+				},
+				edit: {
+					enable: true,
+					renameTitle:"编辑",
+					removeTitle:"删除",
+					showRemoveBtn: beforeShowRemoveBtn,
+					showRenameBtn:true
+				} ,
+				callback:{
+					beforeRemove:removeCate,
+					beforeEditName:updateCate
+				},
+				view:{
+					addHoverDom: addHoverDom,
+					removeHoverDom: removeHoverDom
+				}
+		};
+	   // zTree 的数据属性，深入使用请参考 API 文档（zTreeNode 节点数据详解）
+	   $.ajax({
+				type: 'POST',
+				url: 'good_cates',
+				dataType: 'json',
+				success: function(data){
+					  zTreeObj = $.fn.zTree.init($("#treeDemo"), setting, data);
+				},
+				error:function(data) {
+					console.log(data.msg);
+				},
+	   });
+	 
+	   
+});
+</script>
+ 
+ 
+
+</html>
